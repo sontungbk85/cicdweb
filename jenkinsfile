@@ -53,8 +53,13 @@ pipeline {
             steps {
                 script {
                     sh """
+<<<<<<< HEAD
                     sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yml
                     cat deployment.yml
+=======
+                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' kubernetes/deployment.yml
+                    cat kubernetes/deployment.yml
+>>>>>>> 8fc7177ff9d05c3ead8e4409ea2c08d7b6576f71
                     """
                 }
             }
