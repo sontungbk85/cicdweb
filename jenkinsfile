@@ -49,24 +49,24 @@ pipeline {
                 }
             }
         }
-        stage('Updating Kubernetes deployment file') {
+        stage('Updating deployment file') {
             steps {
                 script {
                     sh """
-                    sed -i 's|image: ${APP_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' kubernetes/deployment.yml
-                    cat kubernetes/deployment.yml
+                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yml
+                    cat deployment.yml
                     """
                 }
             }
         }
-        stage('Apply Kubernetes Configurations') {
+        stage('Apply Configurations') {
             steps {
                 script {
                     withKubeConfig([credentialsId: 'kubeconfig']) {
                         sh """
-                        kubectl apply -f kubernetes/deployment.yml
-                        kubectl apply -f kubernetes/service.yml
-                        kubectl apply -f kubernetes/ingress.yml
+                        kubectl apply -f deployment.yml
+                        kubectl apply -f service.yml
+                        kubectl apply -f ingress.yml
                         """
                     }
                 }
@@ -81,7 +81,7 @@ pipeline {
                     sh """
                       git config --global user.name "sontungbk85"
                       git config --global user.email "sontungbk85@gmail.com"
-                      git add kubernetes/deployment.yml
+                      git add deployment.yml
                       git commit -m "updated the deployment file"
                     """
                     withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
