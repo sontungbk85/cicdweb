@@ -2,7 +2,7 @@ pipeline {
     agent any 
     environment {
         DOCKERHUB_USERNAME = "sontungbk85"
-        APP_NAME = "webcicd"
+        APP_NAME = "cicdweb"
         IMAGE_TAG = "${BUILD_NUMBER}"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         REGISTRY_CREDS = 'dockerhub'
@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     git credentialsId: 'github',
-                    url: 'https://github.com/sontungbk85/webcicd.git',
+                    url: 'https://github.com/sontungbk85/cicdweb.git',
                     branch: 'main'
                 }
             }
@@ -49,17 +49,13 @@ pipeline {
                 }
             }
         }
-        stage('Updating deployment file') {
-            steps {
-                script {
-                    sh """
-<<<<<<< HEAD
+        stage('Updating kubernetes deployment file'){
+            steps{
+                script{
+                    sh """                    
+                    cat deployment.yml
                     sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yml
                     cat deployment.yml
-=======
-                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' kubernetes/deployment.yml
-                    cat kubernetes/deployment.yml
->>>>>>> 8fc7177ff9d05c3ead8e4409ea2c08d7b6576f71
                     """
                 }
             }
@@ -90,7 +86,7 @@ pipeline {
                       git commit -m "updated the deployment file"
                     """
                     withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
-                        sh "git push https://github.com/sontungbk85/webcicd.git main"
+                        sh "git push https://github.com/sontungbk85/cicdweb.git main"
                     }
                 }
             }
