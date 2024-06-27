@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webcicd
+  labels:
+    app: webcicd
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webcicd
+  template:
+    metadata:
+      labels:
+        app: webcicd
+    spec:
+      containers:
+      - name: webcicd
+        image: sontungbk85/webcicd:latest
+        ports:
+        - containerPort: 80

@@ -1,0 +1,94 @@
+pipeline {
+    agent any 
+    environment {
+        DOCKERHUB_USERNAME = "sontungbk85"
+        APP_NAME = "webcicd"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
+        REGISTRY_CREDS = 'dockerhub'
+    }
+    stages {
+        stage('Cleanup workspace') {
+            steps {
+                script {
+                    cleanWs()
+                }
+            }
+        }
+        stage('Checkout code from GitHub') {
+            steps {
+                script {
+                    git credentialsId: 'github',
+                    url: 'https://github.com/sontungbk85/webcicd.git',
+                    branch: 'main'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker_image = docker.build("${IMAGE_NAME}")
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', REGISTRY_CREDS) {
+                        docker_image.push("${BUILD_NUMBER}")
+                        docker_image.push('latest')
+                    }
+                }
+            }
+        }
+        stage('Delete Docker images') {
+            steps {
+                script {
+                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG}"
+                    sh "docker rmi ${IMAGE_NAME}:latest"
+                }
+            }
+        }
+        stage('Updating Kubernetes deployment file') {
+            steps {
+                script {
+                    sh """
+                    sed -i 's|image: ${APP_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' kubernetes/deployment.yml
+                    cat kubernetes/deployment.yml
+                    """
+                }
+            }
+        }
+        stage('Apply Kubernetes Configurations') {
+            steps {
+                script {
+                    withKubeConfig([credentialsId: 'kubeconfig']) {
+                        sh """
+                        kubectl apply -f kubernetes/deployment.yml
+                        kubectl apply -f kubernetes/service.yml
+                        kubectl apply -f kubernetes/ingress.yml
+                        """
+                    }
+                }
+            }
+        }
+        stage('Push the changed deployment file to Git') {
+            when {
+                expression { return currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    sh """
+                      git config --global user.name "sontungbk85"
+                      git config --global user.email "sontungbk85@gmail.com"
+                      git add kubernetes/deployment.yml
+                      git commit -m "updated the deployment file"
+                    """
+                    withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
+                        sh "git push https://github.com/sontungbk85/webcicd.git main"
+                    }
+                }
+            }
+        }
+    }
+}
