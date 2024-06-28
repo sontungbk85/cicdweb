@@ -63,13 +63,11 @@ pipeline {
         stage('Apply Configurations') {
             steps {
                 script {
-                    withKubeConfig([credentialsId: 'kubeconfig']) {
-                        sh """
+                    sh """
                         kubectl apply -f deployment.yml
                         kubectl apply -f service.yml
                         kubectl apply -f ingress.yml
                         """
-                    }
                 }
             }
         }
